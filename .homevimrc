@@ -1,0 +1,253 @@
+set nocompatible              " be iMproved, required
+set shortmess=aoOtI " Read :help shortmess for everything else.
+filetype off                  " required
+set foldmethod=syntax
+set foldlevelstart=20
+set lazyredraw
+set wildmenu
+set incsearch
+set hlsearch
+set cursorline
+
+"
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+nnoremap <leader><space> :nohlsearch<CR>
+let maplocalleader = ","
+call vundle#begin()
+" alternatively, pass a path where Vundle should install plugins
+"call vundle#begin('~/some/path/here')
+
+Plugin 'gmarik/Vundle.vim'
+Plugin 'tpope/vim-surround'
+Plugin 'tpope/vim-fugitive'
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'terryma/vim-multiple-cursors'
+Plugin 'dolph/vim-colors-solarized-black'
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
+Plugin 'scrooloose/nerdcommenter'
+Plugin 'kien/ctrlp.vim'
+Plugin 'vim-scripts/Conque-GDB'
+Plugin 'mhinz/vim-signify'
+Plugin 'rdnetto/YCM-Generator'
+Plugin 'idbrii/AsyncCommand'
+Plugin 'vim-syntastic/syntastic'
+Plugin 'jeaye/color_coded'
+Plugin 'takac/vim-hardtime'
+Plugin 'jiangmiao/auto-pairs'
+Plugin 'guns/xterm-color-table.vim'
+Plugin 'drblallo/AsyncQueue'
+Plugin 'drblallo/GTestParser'
+Plugin 'SirVer/ultisnips'
+Plugin 'honza/vim-snippets'
+Plugin 'halostatue/vim-zoom-win'
+Plugin 'scrooloose/nerdtree'
+Plugin 'tikhomirov/vim-glsl'
+Plugin 'luochen1990/rainbow'
+Plugin 'lervag/vimtex'
+Plugin 'l04m33/vlime'
+Plugin 'reedes/vim-wordy'
+Plugin 'christoomey/vim-tmux-navigator'
+
+" let Vundle manage Vundle, required
+" All of your Plugins must be added before the following line
+call vundle#end()            " required
+filetype plugin indent on    " required
+" To ignore plugin indent changes, instead use:
+"filetype plugin on
+"
+" Brief help
+" :PluginList       - lists configured plugins
+" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+" Put your non-Plugin stuff after this line
+
+
+
+"YOU COMPLETE ME
+let g:ycm_confirm_extra_conf=0
+let g:ycm_show_diagnostics_ui = 0
+nnoremap <F3> :YcmCompleter GoToDefinition<cr>
+nnoremap <F2> :YcmCompleter GoToDeclaration<cr>
+let g:ycm_autoclose_preview_window_after_insertion = 1
+set completeopt-=preview
+
+"SYNTASTIC
+let g:syntastic_c_clang_check_post_args = ""
+let g:syntastic_cpp_clang_check_post_args = ""
+let g:syntastic_c_checkers = ["clang_check"]
+let g:syntastic_cpp_checkers = ["clang_check"]
+let g:syntastic_cpp_clang_tidy_post_args = ""
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+let g:syntastic_cpp_compiler = "clang"
+let g:syntastic_c_compiler = "clang"
+let g:syntastic_cpp_compiler_exec = "/usr/local/bin/clang++"
+let g:syntastic_c_compiler_exec = "/usr/local/bin/clang"
+let g:syntastic_cpp_check_header = 1
+let g:syntastic_cpp_auto_refresh_includes = 1
+let g:syntastic_mode_map = { 'mode': 'passive', 'active_filetypes': [],'passive_filetypes': [] }
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+
+set exrc
+set secure
+set autoread
+
+"CTRLP
+let g:ctrlp_user_command = ['.git/', 'git --git-dir=%s/.git ls-files -oc --exclude-standard']
+let g:ctrlp_working_path_mode = '0'
+
+augroup project
+    autocmd!
+    autocmd BufRead,BufNewFile *.h,*.c set filetype=c.doxygen
+augroup END
+
+"THEME
+let &path.="src/,include/,/usr/include/AL,"
+set t_Co=256
+let g:solarized_termcolors = 256
+syntax enable
+set background=dark
+colorscheme solarized
+let g:airline_theme='jellybeans'
+let g:airline#extensions#tabline#enabled = 1
+set ttimeoutlen=50
+
+
+"CONQUE
+let g:ConqueTerm_StartMessages = 0
+let g:ConqueTerm_Color = 0
+let g:ConqueTerm_CloseOnEnd = 1
+let g:ConqueTerm_Interrupt = '<C-g><C-c>'
+let g:ConqueTerm_ReadUnfocused = 1
+
+set includeexpr=substitute(v:fname,'\\.','/','g')
+set backspace=2
+
+set number
+
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set noexpandtab
+let mapleader=","
+
+nnoremap <leader>gn :bn<cr>
+nnoremap <leader>gp :bp<cr>
+nnoremap <leader>gd :bd<cr>
+
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
+set fillchars+=vert:\ 
+
+autocmd BufWritePost *.cpp silent !clang-format -i <afile> 
+autocmd BufWritePost *.hpp silent !clang-format -i <afile> 
+autocmd BufWritePost *.c silent !clang-format -i <afile> 
+autocmd BufWritePost *.h silent !clang-format -i <afile> 
+
+let g:ColorNormal = 249 "grey
+let g:ColorType = 69
+let g:ColorMacro = 130
+let g:ColorNumber = 118
+let g:ColorComment= 45
+let g:ColorStatement = 204
+let g:ColorVariable = 243
+let g:ColorMacro = 130
+let g:ColorString = 70
+
+
+
+exe 'hi Normal ctermfg=' . g:ColorNormal
+hi link CXXMethod Normal 
+hi link CMethod Normal
+hi link Function Normal
+hi link Constructor Normal 
+hi link Destructor Normal 
+hi link Member Normal
+
+exe 'hi Type ctermfg=' . g:ColorType . 'cterm=bold' 
+hi link Namespace Type 
+
+exe 'hi Number ctermfg=' .g:ColorNumber
+hi link Constant Number 
+
+exe 'hi Macro ctermfg=' . g:ColorMacro
+exe 'hi Comment ctermfg=' . g:ColorComment
+
+exe 'hi Variable ctermfg=' . g:ColorVariable
+
+exe 'hi Statement ctermfg=' . g:ColorStatement
+hi link Conditional Statement
+
+exe 'hi String ctermfg=' . g:ColorString
+hi link PrePrc String 
+hi link Include String
+hi link Macro String
+hi link cDefine String
+hi link cPreCondit String
+hi link cPostCondit  String
+hi link NERDTreeDirSlash String
+hi link NERDTreeDir String
+hi link NERDTreeCWD Type
+hi link NERDTreeOpenable String
+hi link NERDTreeClosable String
+hi link NERDTreeUp  String
+
+hi link reachable Type
+hi link methodName String
+
+hi link failed String
+hi link success Statement
+
+
+hi NonText ctermfg=bg
+
+set number relativenumber
+
+function! s:reloadPreCondid()
+	hi Namespace ctermfg=None
+	hi link Namespace Type
+	hi cPreCondit ctermfg=None
+	hi cPostCondit ctermfg=None
+	hi link cPostCondit String
+	hi link cPreCondit String
+endfunction
+
+autocmd cursormoved * call s:reloadPreCondid() 
+
+augroup numbertoggle
+  autocmd!
+  autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+  autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+augroup END
+
+let g:hardtime_default_on = 1
+map <F4> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">" . " FG:" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"fg#")<CR>
+
+noremap ò o<ESC>
+noremap ç O<ESC>
+
+"Ultisnip
+let g:UltiSnipsExpandTrigger="<c-\\>"
+let g:UltiSnipsJumpForwardTrigger="<c-\\>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+let g:UltiSnipsSnippetDirectories = ['~/.vim/UltiSnips', 'UltiSnips']
+
+let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
+let g:hardtime_ignore_buffer_patterns = [ "CustomPatt[ae]rn", "NERD.*" ]
+map <leader>q :NERDTreeToggle<CR>
+
+"Rainbow
+let g:rainbow_active = 1 
+let g:rainbow_conf = {'ctermfgs': [15, 7,2,6, 9,227 ] }

@@ -1,0 +1,191 @@
+global !p
+def membersToInit(members, cpConst):
+	lines = members.split(";")
+	lines.pop()
+	toReturn = ""
+	a = 0
+	for line in lines:
+		if a != 0:
+			toReturn = toReturn + ", "
+		a = a + 1
+		line = line.replace("\n", "")
+		line = line.split(" ")[-1]
+		if cpConst == False:
+			toReturn = toReturn + line + "() "
+		else:
+			toReturn = toReturn + line + "(other."+line+")"
+	if toReturn != "":
+		toReturn = ": " + toReturn
+	return toReturn
+
+def moveCons(members):
+	lines = members.split(";")
+	lines.pop()
+	toReturn = ""
+		
+	a = 0
+	for line in lines:
+		if a != 0:
+			toReturn = toReturn + ", "
+		a = a + 1
+		line = line.replace("\n", "")
+		memberName = line.split(" ")[-1]
+		typeName = line[0:-1*len(memberName)]
+		if not isTypePrimitive(typeName):
+			toReturn = toReturn + memberName+ "(std::move(other."+memberName+")"
+		else:
+			toReturn = toReturn + memberName+ "(other."+memberName+")"
+	if toReturn != "":
+		toReturn = ": " + toReturn
+	return toReturn
+
+def generateCopyAssignment(members):
+	lines = members.split(";")
+	lines.pop()
+	toReturn = ""
+	for line in lines:
+		line = line.replace("\n", "")
+		line = line.split(" ")[-1]
+		toReturn = toReturn + "\n\t\t" + line + " = other." + line +";"
+	return toReturn
+
+def isTypePrimitive(type):
+	primitives = ["int", "long", "char", "bool", "float", "double", "byte", "short"]
+	for t in primitives:
+		if t== type.strip():
+			return True
+	if type.strip()[-1] == '*':
+		return True
+	return False
+
+def generateSetter(name, type):
+	if isTypePrimitive(type):
+		return "void set"+name.title()+"("+type+ " new" + name.title() +") {" + name +"= new"+name.title()+";}"
+	else:
+		return "void set"+name.title()+"(const "+type+ "& new" + name.title() +") {" + name +"= new"+name.title()+";}"
+
+def generateGetter(name, type):
+	if isTypePrimitive(type):
+		return type + " get" + name.title()+"() const { return " + name + ";}"
+	else:
+		return "const "+type + "& get" + name.title()+"() const { return " + name + ";}"
+
+def generateGetterAndSetters(members):
+
+	lines = members.split(";")
+	lines.pop()
+	toReturn = ""
+	for line in lines:
+		line = line.replace("\n", "")
+		memberName = line.split(" ")[-1]
+		typeName = line[0:-1*len(memberName)]
+		toReturn = toReturn + generateGetter(memberName.strip(), typeName.strip()) + "\n\t\t\t"
+		toReturn = toReturn + generateSetter(memberName.strip(), typeName.strip()) + "\n\t\t\t"
+	return toReturn
+from re import *
+def generateMethod(line, cl):
+	match = re.search(r"(.*?\s+)(\S+)(\s*\(.*\).*)", line.strip())
+	if (match):
+		return match.group(1) + cl + "::" + match.group(2) + match.group(3) + "\n\t{\t\n\t\n\t}"
+	return ""
+		
+
+def generateMethods(declarations, cl):
+	lines = declarations.split(";")
+	lines.pop()
+	toReturn = ""
+	for line in lines:
+		line = line.replace("\n", "")	
+		toReturn = toReturn + "\n\t" + generateMethod(line, cl)
+
+	return toReturn
+
+endglobal
+
+
+snippet fixture "custom google test fixture" b
+#include "gtest/gtest.h"
+
+$1
+
+class ${5:`!v substitute(substitute(vim_snippets#Filename('$1','ClassName'),'^.','\u&',''), '_\(\w\)', '\u\1', 'g')`} : public testing::Test
+{
+	public:
+	$2	
+	virtual void SetUp() { $3 }
+	virtual void TearDown() { $4 }
+};
+endsnippet
+
+snippet test "custom test " b
+
+TEST_F(${3:`!v substitute(substitute(vim_snippets#Filename('$1','ClassName'),'^.','\u&',''), '_\(\w\)', '\u\1', 'g')`}, $1)
+{
+	$2;
+}
+endsnippet
+
+snippet shared "shared ptr" b
+std::shared_ptr<$1>$2;
+endsnippet
+
+snippet unique "unique ptr" b
+std::unique_ptr<$1>$2;
+endsnippet
+
+snippet cls "custom class" b
+#ifndef ${20:`!v substitute(vim_snippets#Filename('$1_H','ClassName'),'.*','\U&\E','')`}
+#define $20
+
+
+namespace ${1:`!v expand('%:p:h:h:t')`}
+{
+	class ${2:`!v substitute(substitute(vim_snippets#Filename('$1','ClassName'),'^.','\u&',''), '_\(\w\)', '\u\1', 'g')`}
+	{
+		public:
+			$2();
+			~$2();
+			$2(const $2& other);
+			$2($2&& other) noexcept ;
+			$2& operator=(const $2& other);
+			//methods
+			$4
+
+			//setter and getters
+			`!p snip.rv=generateGetterAndSetters(t[3])`
+		private:
+			//members
+			$3
+
+			//helpers
+			$5
+	};
+
+}
+#endif /* $20 */
+
+#include "`!v expand('%:p:t')`"
+
+namespace $1
+{
+	$2::$2()  `!p snip.rv=membersToInit(t[3], False)` {}
+
+	$2::~$2() {}
+
+	$2::$2(const $2& other) `!p snip.rv=membersToInit(t[3], True)`{}
+
+	$2::$2($2&& other) noexcept `!p snip.rv=moveCons(t[3])`{}
+
+	$2::operator=(const $2 other) 
+	{
+		`!p snip.rv=generateCopyAssignment(t[3])`
+		return *this;
+	}
+
+
+	`!p snip.rv=generateMethods(t[4], t[2])`
+	`!p snip.rv=generateMethods(t[5], t[2])`
+}
+endsnippet
+
+
