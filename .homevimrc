@@ -40,15 +40,12 @@ Plugin 'guns/xterm-color-table.vim'
 Plugin 'drblallo/AsyncQueue'
 Plugin 'drblallo/GTestParser'
 Plugin 'SirVer/ultisnips'
-Plugin 'honza/vim-snippets'
 Plugin 'halostatue/vim-zoom-win'
 Plugin 'scrooloose/nerdtree'
 Plugin 'tikhomirov/vim-glsl'
-Plugin 'luochen1990/rainbow'
 Plugin 'lervag/vimtex'
-Plugin 'l04m33/vlime'
-Plugin 'reedes/vim-wordy'
 Plugin 'christoomey/vim-tmux-navigator'
+Plugin 'TaDaa/vimade'
 
 " let Vundle manage Vundle, required
 " All of your Plugins must be added before the following line
@@ -178,6 +175,7 @@ hi link Member Normal
 
 exe 'hi Type ctermfg=' . g:ColorType . 'cterm=bold' 
 hi link Namespace Type 
+hi link reachable Type
 
 exe 'hi Number ctermfg=' .g:ColorNumber
 hi link Constant Number 
@@ -193,7 +191,6 @@ hi link Conditional Statement
 exe 'hi String ctermfg=' . g:ColorString
 hi link PrePrc String 
 hi link Include String
-hi link Macro String
 hi link cDefine String
 hi link cPreCondit String
 hi link cPostCondit  String
@@ -204,19 +201,17 @@ hi link NERDTreeOpenable String
 hi link NERDTreeClosable String
 hi link NERDTreeUp  String
 
-hi link reachable Type
 hi link methodName String
 
 hi link failed String
 hi link success Statement
-
 
 hi NonText ctermfg=bg
 
 set number relativenumber
 
 function! s:reloadPreCondid()
-	hi Namespace ctermfg=None
+	"hi Namespace ctermfg=None
 	hi link Namespace Type
 	hi cPreCondit ctermfg=None
 	hi cPostCondit ctermfg=None
@@ -224,7 +219,10 @@ function! s:reloadPreCondid()
 	hi link cPreCondit String
 endfunction
 
-autocmd cursormoved * call s:reloadPreCondid() 
+autocmd cursormoved *.h call s:reloadPreCondid() 
+autocmd cursormoved *.hpp call s:reloadPreCondid() 
+autocmd cursormoved *.cpp call s:reloadPreCondid() 
+autocmd cursormoved *.c call s:reloadPreCondid() 
 
 augroup numbertoggle
   autocmd!
@@ -232,7 +230,7 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
 
-let g:hardtime_default_on = 1
+let g:hardtime_default_on = 0
 map <F4> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">" . " FG:" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"fg#")<CR>
 
 noremap ò o<ESC>
@@ -248,6 +246,3 @@ let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
 let g:hardtime_ignore_buffer_patterns = [ "CustomPatt[ae]rn", "NERD.*" ]
 map <leader>q :NERDTreeToggle<CR>
 
-"Rainbow
-let g:rainbow_active = 1 
-let g:rainbow_conf = {'ctermfgs': [15, 7,2,6, 9,227 ] }

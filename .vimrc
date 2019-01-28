@@ -29,72 +29,77 @@ function! s:setType(val, cmakeBuildBir, cCompiler, cppCompiler, buildType, extra
 endfunction
 
 function! s:getBuildCommand()
-	let s:command =  g:CMAKE . " -DCMAKE_BUILD_TYPE=" . g:BUILD_TYPE . " -DCMAKE_C_COMPILER=".g:CCOMPILER . " -DCMAKE_CXX_COMPILER=" . g:CPPCOMPILER . " -G " . g:GENERATOR . " " . g:EXTRA_CONFIG . " --build ../"
+	let s:command =  "!" .g:CMAKE . " -DCMAKE_BUILD_TYPE=" . g:BUILD_TYPE . " -DCMAKE_C_COMPILER=".g:CCOMPILER . " -DCMAKE_CXX_COMPILER=" . g:CPPCOMPILER . " -G " . g:GENERATOR . " " . g:EXTRA_CONFIG . " --build ../"
 	return s:command
 endfunction
 
 function! s:Rebuild()
-	call AppendExternal("rm -r ./" . g:BUILD_DIRECTORY)
-	call AppendExternal("mkdir ./" . g:BUILD_DIRECTORY)
-	call AppendInternal(":lcd " . g:BUILD_DIRECTORY)
-	call AppendRunAndOpenOnFailure(s:getBuildCommand())
-	call AppendInternal(":lcd ../")
+	call AQAppend("!rm -r ./" . g:BUILD_DIRECTORY)
+	call AQAppend("!mkdir ./" . g:BUILD_DIRECTORY)
+	call AQAppend(":lcd " . g:BUILD_DIRECTORY)
+	let l:t = AQAppend(s:getBuildCommand())
+	call AQAppend(":lcd ../")
+	call AQAppendOpen(0, l:t)
 endfunction
 
 function! s:RunTest(param, executible, args)
-	call s:SilentRun(a:param, a:executible, a:args)
-	call AppendOpenLast()
-	call AppendRunOnFailureInternal("call ParseClangOutput()")
-	call AppendRunOnNamedInternal("call RunOnBuffer()", "run")
-	call AppendRunOnNamedInternal("call ApplyTestSyntax()", "run")
-	call AppendRunOnNamedInternal("call ColorizeLog()", "run")
-	call AppendRunOnNamedInternal(":lcd ".g:BUILD_DIRECTORY,"run")
-	call AppendRunOnNamedInternal(":w", "run")
-	call AppendOpenErrorFileIfExist()
-	call AppendInternal("call AsanParseBuffer()")
-	silent call AppendRunOnNamedInternal(":w", "run")
+	let l:t = s:SilentRun(a:param, a:executible, a:args)
+	call AQAppendOpen(0, l:t[0])
+	call AQAppendCond("call ParseClangOutput()", 0, l:t[0])
+
+	call AQAppendOpen(-1, l:t[1])
+	call AQAppendCond("call RunOnBuffer()", -1, l:t[1])
+	call AQAppendCond("call ApplyTestSyntax()", -1, l:t[1])
+	call AQAppendCond("call ColorizeLog()", -1, l:t[1])
+
+	call AQAppend(":lcd ".g:BUILD_DIRECTORY)
+
+	call AQAppend("setlocal nomodified")
 endfunction
 
 function! s:silentBuild(target)
-	let s:build = g:CMAKE . " --build " . g:BUILD_DIRECTORY . " --target " . a:target . " -- -j 4"
-	call AppendExternal(s:build)
+	let s:build = "!" . g:CMAKE . " --build " . g:BUILD_DIRECTORY . " --target " . a:target . " -- -j 4"
+	return AQAppend(s:build)
 endfunction
 
 function! s:SilentRun(target, executible, args)
-	call s:silentBuild(a:target)
-
-	let s:exec = " ./" . g:BUILD_DIRECTORY . "/" . a:executible . " " . a:args
-	call AppendRunOnSuccessExternal(s:exec, "run")
+	let s:exec = "!./" . g:BUILD_DIRECTORY . "/" . a:executible . " " . a:args
+	let l:ret = s:silentBuild(a:target)
+	return [l:ret, AQAppendCond(s:exec, 1, l:ret)]
 endfunction
 
 function! s:Run(param, executible, args)
-	call s:SilentRun(a:param, a:executible, a:args)
-	call AppendOpenLast()
-	call AppendRunOnFailureInternal("call ParseClangOutput()")
-	call AppendRunOnNamedInternal("call ColorizeLog()", "run")
-	call AppendOpenErrorFileIfExist()
-	call AppendInternal("call AsanParseBuffer()")
-	silent call AppendRunOnNamedInternal(":w", "run")
+	let l:r = s:SilentRun(a:param, a:executible, a:args)
+	call AQAppendOpen(0, l:r[0])
+	call AQAppendCond("call ParseClangOutput()", 0, l:r[0])
+
+	call AQAppendOpen(-1, l:r[1])
+	call AQAppendCond("call ColorizeLog()")
+	call AQAppendCond("setlocal nomodified")
+
+	call AQAppendOpenError(0, l:r[1])
+	call AQAppendCond("call AsanParseBuffer()", 0, l:r[1])
+
+	call AQAppendCond("setlocal nomodified")
 endfunction
 
 function! s:RunD(target, executible, args)
-	let s:exec = "./" . g:BUILD_DIRECTORY . "/" . a:executible . " " . a:args
+	let s:exec = "!./" . g:BUILD_DIRECTORY . "/" . a:executible . " " . a:args
 
-	call s:silentBuild(a:target)
-	call AppendOpenOnFailure()
-	call AppendRunOnFailureInternal("call ParseClangOutput()")
-	call AppendRunOnSuccessInternal("ConqueGdb -ex=r --args " . s:exec)
-	call AppendRunOnSuccessInternal(":lcd ".g:BUILD_DIRECTORY)
+	let l:t = s:silentBuild(a:target)
+	call AQAppendOpen(0)
+	call AQAppendCond("call ParseClangOutput()", 0, l:t)
+	call AQAppendCond("ConqueGdb -ex=r --args " . s:exec, 1, l:t)
+	call AQAppendCond(":lcd ".g:BUILD_DIRECTORY, 1, l:t)
 
 endfunction
 
 function! s:coverage(val, cmakeBuildBir, cCompiler, cppCompiler, buildType, extra, generator)
-	silent call s:setType(a:val, a:cmakeBuildBir, a:cCompiler, a:cppCompiler, a:buildType, a:extra, a:generator)
-	"silent call s:Rebuild()
-	silent let s:build = g:CMAKE . " --build " . g:BUILD_DIRECTORY . " --target runTest -- -j 4"
-	silent call AppendRunOnSuccessExternal(s:build)
-	call AppendOpenOnFailure()
-	silent call AppendRunOnSuccessExternal("bash coverage.sh")
+	call s:setType(a:val, a:cmakeBuildBir, a:cCompiler, a:cppCompiler, a:buildType, a:extra, a:generator)
+	let s:build = "!" .g:CMAKE . " --build " . g:BUILD_DIRECTORY . " --target runTest -- -j 4"
+	let l:t = AQAppend(s:build)
+	call AQAppendOpen(0)
+	call AQAppendCond("!bash coverage.sh", 1, l:t)
 endfunction
 
 function! s:generateCompilationDatabase()
@@ -160,23 +165,6 @@ function! ColorizeLog()
 	syntax match logFile ':\s\+\S\+\s*'
 endfunction
 
-function! s:findPathToTarget(folder, newClassName)
-endfunction
-
-function! s:addClass(folder, newClassName)
-	execute "!echo TARGET_SOURCES\\(".a:folder." PRIVATE src/".a:newClassName."\\) >> game/".a:folder."/CMakeLists.txt"
-	execute "vsp ./core/".a:folder."/src/".a:newClassName.".cpp"
-	execute "sp ./core/".a:folder."/include/".a:newClassName.".hpp"
-	normal icls
-endfunction
-
-function! s:addTest(folder, testName)
-	execute "!echo TARGET_SOURCES\\(runTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/".a:testName."\\) >> test/core/".a:folder."/CMakeLists.txt"
-	execute "vsp ./test/core/".a:folder."/src/".a:testName.".cpp"
-	normal itest
-
-endfunction
-
 exe "hi clangOutError ctermfg="g:ColorStatement
 exe "hi clangOutNote ctermfg="g:ColorNumber
 exe "hi clangOutFile ctermfg="g:ColorType
@@ -192,7 +180,7 @@ command! -nargs=1 Rename call s:clangRename(<f-args>)
 
 function! s:clangRename(newName)
 	let s:offset = line2byte(line(".")) + col(".") - 2
-	let command = "clang-rename -offset=" . s:offset . " -i -new-name=" . a:newName . " " . expand('%:t')
-	call AppendExternal(command)
-	call AppendRunOnSuccessInternal("checktime")
+	let command = "!clang-rename -offset=" . s:offset . " -i -new-name=" . a:newName . " " . expand('%:t')
+	call AQAppend(command)
+	call AQAppendCond("checktime", 1)
 endfunction
