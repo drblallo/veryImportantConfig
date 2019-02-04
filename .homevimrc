@@ -8,6 +8,7 @@ set wildmenu
 set incsearch
 set hlsearch
 set cursorline
+set shell=/bin/bash
 
 "
 " set the runtime path to include Vundle and initialize
@@ -32,9 +33,7 @@ Plugin 'vim-scripts/Conque-GDB'
 Plugin 'mhinz/vim-signify'
 Plugin 'rdnetto/YCM-Generator'
 Plugin 'idbrii/AsyncCommand'
-Plugin 'vim-syntastic/syntastic'
 Plugin 'jeaye/color_coded'
-Plugin 'takac/vim-hardtime'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'guns/xterm-color-table.vim'
 Plugin 'drblallo/AsyncQueue'
@@ -46,6 +45,9 @@ Plugin 'tikhomirov/vim-glsl'
 Plugin 'lervag/vimtex'
 Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'TaDaa/vimade'
+Plugin 'w0rp/ale'
+Plugin 'ludovicchabant/vim-gutentags'
+
 
 " let Vundle manage Vundle, required
 " All of your Plugins must be added before the following line
@@ -64,6 +66,13 @@ filetype plugin indent on    " required
 " Put your non-Plugin stuff after this line
 
 
+let g:airline#extensions#ale#enabled = 1
+let g:ale_linters = { 'cpp': ['clangtidy'], 'python': ['pylint', 'vulture'],}
+
+let g:vimtex_view_method = 'zathura'
+let g:latex_view_general_viewer = 'zathura'
+let g:gutentags_file_list_command = 'git ls-files'
+
 
 "YOU COMPLETE ME
 let g:ycm_confirm_extra_conf=0
@@ -72,28 +81,12 @@ nnoremap <F3> :YcmCompleter GoToDefinition<cr>
 nnoremap <F2> :YcmCompleter GoToDeclaration<cr>
 let g:ycm_autoclose_preview_window_after_insertion = 1
 set completeopt-=preview
+if !exists('g:ycm_semantic_triggers')
+	let g:ycm_semantic_triggers = {}
+endif
+let g:ycm_semantic_triggers.python = [ 're!\w{2}' ]
+let g:ycm_semantic_triggers.tex = g:vimtex#re#youcompleteme
 
-"SYNTASTIC
-let g:syntastic_c_clang_check_post_args = ""
-let g:syntastic_cpp_clang_check_post_args = ""
-let g:syntastic_c_checkers = ["clang_check"]
-let g:syntastic_cpp_checkers = ["clang_check"]
-let g:syntastic_cpp_clang_tidy_post_args = ""
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-let g:syntastic_cpp_compiler = "clang"
-let g:syntastic_c_compiler = "clang"
-let g:syntastic_cpp_compiler_exec = "/usr/local/bin/clang++"
-let g:syntastic_c_compiler_exec = "/usr/local/bin/clang"
-let g:syntastic_cpp_check_header = 1
-let g:syntastic_cpp_auto_refresh_includes = 1
-let g:syntastic_mode_map = { 'mode': 'passive', 'active_filetypes': [],'passive_filetypes': [] }
-
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
 
 set exrc
 set secure
@@ -230,7 +223,6 @@ augroup numbertoggle
   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
 augroup END
 
-let g:hardtime_default_on = 0
 map <F4> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">" . " FG:" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"fg#")<CR>
 
 noremap ò o<ESC>
@@ -242,7 +234,5 @@ let g:UltiSnipsJumpForwardTrigger="<c-\\>"
 let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 let g:UltiSnipsSnippetDirectories = ['~/.vim/UltiSnips', 'UltiSnips']
 
-let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
-let g:hardtime_ignore_buffer_patterns = [ "CustomPatt[ae]rn", "NERD.*" ]
 map <leader>q :NERDTreeToggle<CR>
 
